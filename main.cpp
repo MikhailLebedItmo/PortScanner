@@ -15,31 +15,25 @@ std::mutex cout_mutex;
 void scan_port(const std::string& host, int port) {
     int sockfd;
     struct sockaddr_in server_addr;
-    
-    // Создаем сокет
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         std::lock_guard<std::mutex> guard(cout_mutex);
         std::cerr << "Ошибка при создании сокета\n";
         return;
     }
-
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
-    
     if (inet_pton(AF_INET, host.c_str(), &server_addr.sin_addr) <= 0) {
         std::lock_guard<std::mutex> guard(cout_mutex);
         std::cerr << "Ошибка при преобразовании адреса\n";
         close(sockfd);
         return;
     }
-
     struct timeval timeout;
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
     setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
-
     if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == 0) {
         std::lock_guard<std::mutex> guard(cout_mutex);
         std::cout << "[+] Порт " << port << " открыт на хосте " << host << "\n";
@@ -47,7 +41,6 @@ void scan_port(const std::string& host, int port) {
         std::lock_guard<std::mutex> guard(cout_mutex);
         std::cout << "[-] Порт " << port << " закрыт на хосте " << host << "\n";
     }
-
     close(sockfd);
 }
 
